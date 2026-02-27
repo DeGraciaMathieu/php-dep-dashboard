@@ -735,13 +735,6 @@ function buildStylesheet() {
         'transition-duration': '150ms',
       },
     },
-    {
-      selector: 'node[nodeType="namespace"][?hasCycle]',
-      style: {
-        'border-color': '#EF4444',
-        'border-width': 3,
-      },
-    },
   ];
 }
 

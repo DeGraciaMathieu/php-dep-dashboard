@@ -363,13 +363,6 @@ function buildStylesheet() {
         'border-width': 3,
       },
     },
-    {
-      selector: 'node[nodeType="namespace"][?hasCycle]',
-      style: {
-        'border-color': '#EF4444',
-        'border-width': 3,
-      },
-    },
   ];
 }
 
