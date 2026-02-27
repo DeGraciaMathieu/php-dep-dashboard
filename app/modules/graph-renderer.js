@@ -82,6 +82,17 @@ export function initGraph(data) {
 
   cy.on('mouseover', 'node', (evt) => {
     const node = evt.target;
+    const d = node.data();
+
+    if (d.nodeType === 'namespace') {
+      const neighborhood = node.closedNeighborhood();
+      cy.startBatch();
+      cy.elements().addClass('hover-dimmed');
+      neighborhood.removeClass('hover-dimmed');
+      node.addClass('hover-highlighted');
+      cy.endBatch();
+    }
+
     node.connectedEdges().forEach((edge) => {
       if (edge.source().id() === node.id()) {
         edge.addClass('edge-out');
@@ -92,7 +103,10 @@ export function initGraph(data) {
   });
 
   cy.on('mouseout', 'node', () => {
+    cy.startBatch();
+    cy.elements().removeClass('hover-dimmed hover-highlighted');
     cy.edges().removeClass('edge-out edge-in');
+    cy.endBatch();
   });
 
   on('focus:node', ({ nodeId, depth }) => focusNode(nodeId, depth));
@@ -299,6 +313,21 @@ function buildStylesheet() {
       selector: 'node.search-match',
       style: {
         'border-color': '#F97316',
+        'border-width': 4,
+      },
+    },
+    {
+      selector: 'node.hover-dimmed',
+      style: { opacity: 0.12 },
+    },
+    {
+      selector: 'edge.hover-dimmed',
+      style: { opacity: 0.08 },
+    },
+    {
+      selector: 'node.hover-highlighted',
+      style: {
+        'border-color': '#60A5FA',
         'border-width': 4,
       },
     },
