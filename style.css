@@ -460,6 +460,26 @@ body {
   margin-bottom: 6px;
 }
 
+.ns-search-input {
+  width: 100%;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+.ns-search-input:focus {
+  border-color: var(--accent);
+}
+
+.ns-search-input::placeholder {
+  color: var(--text-muted);
+}
+
 .namespace-filters {
   max-height: 200px;
   overflow-y: auto;

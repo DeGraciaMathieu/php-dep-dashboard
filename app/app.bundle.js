@@ -906,6 +906,7 @@ function renderFilters(data) {
         <button class="btn btn--sm" id="ns-select-all">All</button>
         <button class="btn btn--sm" id="ns-deselect-all">None</button>
       </div>
+      <input type="text" id="ns-search" class="ns-search-input" placeholder="Filter namespaces…" autocomplete="off">
       <div class="namespace-filters">
         ${namespaces
           .map(
@@ -957,6 +958,16 @@ function bindFilterEvents() {
         .querySelectorAll('input[data-filter="namespace"]')
         .forEach((cb) => { cb.checked = checked; });
       applyFilters();
+    }
+  });
+
+  filtersEl.addEventListener('input', (e) => {
+    if (e.target.id === 'ns-search') {
+      const query = e.target.value.trim().toLowerCase();
+      filtersEl.querySelectorAll('.namespace-filters .filter-check').forEach((label) => {
+        const ns = label.querySelector('input').value.toLowerCase();
+        label.style.display = ns.includes(query) ? '' : 'none';
+      });
     }
   });
 }
