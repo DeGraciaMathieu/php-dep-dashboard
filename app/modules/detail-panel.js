@@ -26,9 +26,13 @@ function renderNode(nodeId) {
   const cls = data.classes.get(nodeId);
   if (!cls) return;
 
-  // Compute in/out edges
-  const outEdges = data.edges.filter((e) => e.source === nodeId);
-  const inEdges = data.edges.filter((e) => e.target === nodeId);
+  // Compute in/out edges, deduplicated by target/source
+  const outEdges = deduplicateEdges(
+    data.edges.filter((e) => e.source === nodeId), 'target'
+  );
+  const inEdges = deduplicateEdges(
+    data.edges.filter((e) => e.target === nodeId), 'source'
+  );
 
   // Check if in cycle
   const inCycle = state.cycles.some((c) => c.includes(nodeId));
@@ -140,4 +144,21 @@ function renderEdge(edgeData) {
 
 function shortName(fqcn) {
   return fqcn.split('\\').pop();
+}
+
+// Merge edges that share the same key (target or source), combining their types
+function deduplicateEdges(edges, key) {
+  const map = new Map();
+  for (const e of edges) {
+    const k = e[key];
+    if (map.has(k)) {
+      const existing = map.get(k);
+      if (!existing.type.includes(e.type)) {
+        existing.type += `, ${e.type}`;
+      }
+    } else {
+      map.set(k, { ...e });
+    }
+  }
+  return Array.from(map.values());
 }
