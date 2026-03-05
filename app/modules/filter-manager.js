@@ -162,8 +162,8 @@ function applyFilters() {
   cy.nodes().forEach((node) => {
     const d = node.data();
 
-    // Namespace folder nodes are always visible — they're navigational
-    if (d.nodeType === 'namespace') {
+    // Namespace folder/container nodes are always visible — they're navigational
+    if (d.nodeType === 'namespace' || d.nodeType === 'namespace-container') {
       node.show();
       return;
     }

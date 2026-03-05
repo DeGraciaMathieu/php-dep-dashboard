@@ -346,6 +346,25 @@ function buildStylesheet() {
       },
     },
     {
+      selector: 'node[nodeType="namespace-container"]',
+      style: {
+        'background-color': '#1E3A5F',
+        'background-opacity': 0.35,
+        'border-color': '#3B82F6',
+        'border-width': 1,
+        'border-opacity': 0.6,
+        shape: 'roundrectangle',
+        label: 'data(label)',
+        'text-valign': 'top',
+        'text-halign': 'center',
+        'font-size': 11,
+        'font-weight': 700,
+        color: '#93C5FD',
+        'text-outline-width': 0,
+        padding: 20,
+      },
+    },
+    {
       selector: 'node[nodeType="namespace"]',
       style: {
         'background-color': '#0F4C81',
