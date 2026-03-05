@@ -1,7 +1,19 @@
 import { emit, state } from './state.js';
 
 let currentScope = []; // array of namespace segments, e.g. ['App', 'Services']
+let viewMode = 'folders'; // 'folders' | 'classes'
 let nsData = null;
+
+export function getViewMode() {
+  return viewMode;
+}
+
+export function setViewMode(mode) {
+  viewMode = mode;
+  renderBreadcrumb();
+  emit('selection:cleared');
+  emit('namespace:rebuild');
+}
 
 /**
  * Build Cytoscape elements for the given scope level.
@@ -141,6 +153,85 @@ export function buildNamespaceElementsAtScope(data, scope) {
   return [...nodes, ...edges];
 }
 
+/**
+ * Build Cytoscape elements showing all individual classes at the given scope,
+ * without grouping into namespace folders.
+ */
+export function buildClassElementsAtScope(data, scope) {
+  const SEP = '\\';
+  const nodes = [];
+  const edges = [];
+
+  const degree = new Map();
+  for (const e of data.edges) {
+    degree.set(e.source, (degree.get(e.source) || 0) + 1);
+    degree.set(e.target, (degree.get(e.target) || 0) + 1);
+  }
+
+  const allClasses = [...data.classes.values()].filter((c) => !c.external);
+
+  for (const cls of allClasses) {
+    if (scope.length > 0) {
+      const parts = cls.fqcn.split(SEP);
+      if (parts.length <= scope.length) continue;
+      let match = true;
+      for (let i = 0; i < scope.length; i++) {
+        if (parts[i] !== scope[i]) { match = false; break; }
+      }
+      if (!match) continue;
+    }
+
+    nodes.push({
+      data: {
+        id: cls.fqcn,
+        label: cls.fqcn.split(SEP).pop(),
+        fullLabel: cls.fqcn,
+        type: cls.type,
+        nodeType: 'class',
+        external: false,
+        namespace: cls.namespace,
+        file: cls.file,
+        line: cls.line,
+        depCount: cls.dependencies ? cls.dependencies.length : 0,
+        dependantCount: cls.dependants ? cls.dependants.length : 0,
+        degree: degree.get(cls.fqcn) || 0,
+      },
+    });
+  }
+
+  const renderedIds = new Set(nodes.map((n) => n.data.id));
+  const CONFIDENCE_RANK = { certain: 4, high: 3, medium: 2, low: 1 };
+  const edgeMap = new Map();
+
+  for (const e of data.edges) {
+    if (!renderedIds.has(e.source) || !renderedIds.has(e.target)) continue;
+    const key = e.source + '\u2192' + e.target;
+    if (!edgeMap.has(key)) edgeMap.set(key, { source: e.source, target: e.target, entries: [] });
+    edgeMap.get(key).entries.push(e);
+  }
+
+  let ei = 0;
+  for (const group of edgeMap.values()) {
+    const { source, target, entries } = group;
+    const best = entries.reduce((a, b) =>
+      (CONFIDENCE_RANK[b.confidence] || 0) > (CONFIDENCE_RANK[a.confidence] || 0) ? b : a
+    );
+    edges.push({
+      data: {
+        id: 'e' + ei++,
+        source,
+        target,
+        weight: entries.length,
+        confidence: best.confidence,
+        edgeType: entries.map((e) => e.type).join(', '),
+        entries,
+      },
+    });
+  }
+
+  return [...nodes, ...edges];
+}
+
 export function navigateToScope(nsPath) {
   currentScope = nsPath ? nsPath.split('\\') : [];
   renderBreadcrumb();
@@ -179,9 +270,21 @@ function renderBreadcrumb() {
     }
   }
 
-  el.innerHTML = items.join('');
+  const isClassMode = viewMode === 'classes';
+  const toggleLabel = isClassMode ? 'Namespaces' : 'Classes';
+  const toggleTitle = isClassMode ? 'Afficher par namespaces' : 'Afficher toutes les classes';
+
+  el.innerHTML =
+    '<span class="breadcrumb-path">' + items.join('') + '</span>' +
+    '<button class="view-mode-toggle' + (isClassMode ? ' view-mode-toggle--active' : '') +
+    '" id="view-mode-toggle" title="' + toggleTitle + '">' + toggleLabel + '</button>';
+
   el.querySelectorAll('.breadcrumb-item[data-scope]').forEach((item) => {
     item.addEventListener('click', () => navigateToScope(item.dataset.scope));
+  });
+
+  el.querySelector('#view-mode-toggle').addEventListener('click', () => {
+    setViewMode(viewMode === 'folders' ? 'classes' : 'folders');
   });
 }
 

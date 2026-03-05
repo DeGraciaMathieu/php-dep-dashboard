@@ -1,10 +1,5 @@
 import { emit, on, state } from './state.js';
-import {
-  buildNamespaceElementsAtScope,
-  initNamespaceBrowser,
-  navigateToScope,
-  getCurrentScope,
-} from './namespace-browser.js';
+import { buildNamespaceElementsAtScope, buildClassElementsAtScope, initNamespaceBrowser, navigateToScope, getCurrentScope, getViewMode } from './namespace-browser.js';
 
 let cy = null;
 
@@ -116,7 +111,9 @@ export function initGraph(data) {
   on('namespace:rebuild', () => {
     if (!cy || !state.data) return;
     const scope = getCurrentScope();
-    const els = buildNamespaceElementsAtScope(state.data, scope);
+    const els = getViewMode() === 'classes'
+      ? buildClassElementsAtScope(state.data, scope)
+      : buildNamespaceElementsAtScope(state.data, scope);
     cy.startBatch();
     cy.elements().remove();
     cy.add(els);
@@ -126,7 +123,24 @@ export function initGraph(data) {
     runLayout('fcose');
   });
 
+  const btnExport = document.getElementById('btn-export-png');
+  if (btnExport) {
+    btnExport.removeAttribute('hidden');
+    btnExport.addEventListener('click', exportPng);
+  }
+
   emit('graph:ready', cy);
+}
+
+function exportPng() {
+  if (!cy) return;
+  const dataUrl = cy.png({ output: 'blob', bg: '#0F172A', full: true, scale: 2 });
+  const url = URL.createObjectURL(dataUrl);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'php-dep-graph.png';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function buildElements(data) {

@@ -260,15 +260,46 @@ body {
 .ns-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
   padding: 5px 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   font-size: 12px;
   color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.breadcrumb-path {
+  flex: 1;
   overflow-x: auto;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.view-mode-toggle {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.view-mode-toggle:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.view-mode-toggle--active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .breadcrumb-item {
