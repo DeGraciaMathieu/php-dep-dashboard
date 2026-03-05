@@ -1,0 +1,8 @@
+{
+  "name": "php-dep-insights",
+  "version": "1.0.0",
+  "description": "PHP Dependency Insights — visual dependency graph explorer",
+  "scripts": {
+    "bundle": "node scripts/bundle.js"
+  }
+}
