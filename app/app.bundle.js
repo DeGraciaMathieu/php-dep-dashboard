@@ -80,7 +80,7 @@ const WORKER_CODE = `
   function getNamespaceKey(fqcn, isExternal) {
     var parts = fqcn.split(SEP);
     if (parts.length < 2) return parts[0];
-    return isExternal ? parts[0] : parts.slice(0, 2).join(SEP);
+    return isExternal ? parts[0] : parts.slice(0, -1).join(SEP);
   }
 
   function detectCycles(edges, nodeCount) {
@@ -267,7 +267,7 @@ function waitForFilePicker() {
 function getNamespaceKey(fqcn, isExternal) {
   const parts = fqcn.split('\\');
   if (parts.length < 2) return parts[0];
-  return isExternal ? parts[0] : parts.slice(0, 2).join('\\');
+  return isExternal ? parts[0] : parts.slice(0, -1).join('\\');
 }
 
 
