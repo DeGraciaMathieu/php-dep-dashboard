@@ -83,6 +83,7 @@ export function initGraph(data) {
       const neighborhood = node.closedNeighborhood();
       cy.startBatch();
       cy.elements().addClass('hover-dimmed');
+      cy.nodes('[nodeType="namespace-container"]').removeClass('hover-dimmed');
       neighborhood.removeClass('hover-dimmed');
       node.addClass('hover-highlighted');
       cy.endBatch();
@@ -469,6 +470,7 @@ export function focusNode(nodeId, depth = 1) {
 
   cy.startBatch();
   cy.elements().addClass('dimmed');
+  cy.nodes('[nodeType="namespace-container"]').removeClass('dimmed');
   focus.removeClass('dimmed');
   node.addClass('highlighted');
   cy.endBatch();
