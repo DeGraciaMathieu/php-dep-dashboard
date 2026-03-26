@@ -1,0 +1,73 @@
+#!/usr/bin/env php
+<?php
+
+$dashboardDir = dirname(__DIR__);
+$phpDep = $dashboardDir . '/vendor/bin/php-dep';
+
+// Colors
+$bold  = "\033[1m";
+$green = "\033[32m";
+$red   = "\033[31m";
+$cyan  = "\033[36m";
+$reset = "\033[0m";
+
+function error(string $message): never
+{
+    global $red, $reset;
+    fwrite(STDERR, "{$red}Error:{$reset} {$message}\n");
+    exit(1);
+}
+
+// Help
+if (($argv[1] ?? null) === null || in_array($argv[1], ['--help', '-h'])) {
+    echo <<<HELP
+    {$bold}PHP Dep Dashboard{$reset}
+
+    {$bold}Usage:{$reset}
+      bin/analyse <path> [options]
+
+    {$bold}Arguments:{$reset}
+      {$cyan}path{$reset}    Path to analyse (e.g. src/, app/)
+
+    {$bold}Options:{$reset}
+      {$cyan}--depth=N{$reset}    Dependency depth (passed to php-dep)
+      {$cyan}--help{$reset}       Show this help
+
+    {$bold}Example:{$reset}
+      bin/analyse src/
+      bin/analyse ../my-project/src/
+
+    HELP;
+    exit(0);
+}
+
+// Validate php-dep is installed
+if (!file_exists($phpDep)) {
+    error("php-dep not found. Run: composer install");
+}
+
+$path = $argv[1];
+
+if (!is_dir($path)) {
+    error("Path not found: {$path}");
+}
+
+// Forward remaining arguments to php-dep
+$extraArgs = array_slice($argv, 2);
+$extra = implode(' ', array_map('escapeshellarg', $extraArgs));
+
+$cmd = escapeshellarg($phpDep) . ' analyze ' . escapeshellarg($path) . ' --format=json ' . $extra . ' 2>&1';
+
+echo "{$bold}Analysing{$reset} {$cyan}{$path}{$reset}...\n";
+
+$output = shell_exec($cmd);
+
+if (! $output) {
+    error("php-dep returned invalid output.");
+}
+
+$folderName = basename(realpath($path));
+$dataFile = $dashboardDir . '/' . $folderName . '.json';
+file_put_contents($dataFile, $output);
+
+echo "{$green}✓{$reset} {$folderName}.json generated\n";

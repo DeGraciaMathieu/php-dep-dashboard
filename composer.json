@@ -1,0 +1,17 @@
+{
+    "name": "degraciamathieu/php-dep-dashboard",
+    "description": "Interactive dependency graph dashboard for PHP projects, powered by php-dep",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "degraciamathieu/php-dep": "^1.0"
+    },
+    "bin": [
+        "bin/analyse"
+    ],
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    }
+}
