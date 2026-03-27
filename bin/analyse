@@ -31,6 +31,7 @@ if (($argv[1] ?? null) === null || in_array($argv[1], ['--help', '-h'])) {
 
     {$bold}Options:{$reset}
       {$cyan}--depth=N{$reset}    Dependency depth (passed to php-dep)
+      {$cyan}--open{$reset}       Open the dashboard in the browser after analysis
       {$cyan}--help{$reset}       Show this help
 
     {$bold}Example:{$reset}
@@ -52,8 +53,9 @@ if (!is_dir($path)) {
     error("Path not found: {$path}");
 }
 
-// Forward remaining arguments to php-dep
-$extraArgs = array_slice($argv, 2);
+// Parse options
+$openBrowser = in_array('--open', $argv);
+$extraArgs = array_filter(array_slice($argv, 2), fn($a) => $a !== '--open');
 $extra = implode(' ', array_map('escapeshellarg', $extraArgs));
 
 $cmd = escapeshellarg($phpDep) . ' analyze ' . escapeshellarg($path) . ' --format=json ' . $extra . ' 2>&1';
@@ -71,3 +73,16 @@ $dataFile = $dashboardDir . '/' . $folderName . '.json';
 file_put_contents($dataFile, $output);
 
 echo "{$green}✓{$reset} {$folderName}.json generated\n";
+
+if ($openBrowser) {
+    $indexFile = $dashboardDir . '/index.html';
+    $url = 'file://' . $indexFile . '?file=' . rawurlencode($folderName . '.json');
+    $opener = match(PHP_OS_FAMILY) {
+        'Darwin'  => 'open',
+        'Windows' => 'start',
+        default   => 'xdg-open',
+    };
+
+    shell_exec($opener . ' ' . escapeshellarg($url));
+    echo "{$green}✓{$reset} Dashboard opened in browser\n";
+}
