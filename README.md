@@ -1,5 +1,7 @@
 # PHP Dep Insights
 
+https://github.com/user-attachments/assets/2992bec4-275f-403c-8e3b-74b1843c41fb
+
 A browser-based, interactive dependency graph explorer for PHP projects.
 
 ## Installation
