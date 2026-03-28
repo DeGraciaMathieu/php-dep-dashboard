@@ -899,7 +899,7 @@ function buildStylesheet() {
     {
       selector: 'edge',
       style: {
-        width: 1.5,
+        width: 'mapData(weight, 1, 20, 1.5, 8)',
         'line-color': '#94A3B8',
         'target-arrow-color': '#94A3B8',
         'target-arrow-shape': 'triangle',
@@ -920,7 +920,7 @@ function buildStylesheet() {
       style: {
         'line-color': '#EF4444',
         'target-arrow-color': '#EF4444',
-        width: 2,
+        width: 'mapData(weight, 1, 20, 2, 9)',
       },
     },
     {
@@ -928,7 +928,7 @@ function buildStylesheet() {
       style: {
         'line-color': '#22C55E',
         'target-arrow-color': '#22C55E',
-        width: 2,
+        width: 'mapData(weight, 1, 20, 2, 9)',
       },
     },
     {
