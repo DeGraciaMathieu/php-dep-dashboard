@@ -246,8 +246,8 @@ function renderEdge(edgeData) {
 
 function renderInstability(value) {
   const pct = Math.round(value * 100);
-  const color = value < 0.33 ? '#22C55E' : value < 0.67 ? '#F59E0B' : '#EF4444';
-  const label = value < 0.33 ? 'Stable' : value < 0.67 ? 'Balanced' : 'Unstable';
+  const color = value < 0.33 ? '#3B82F6' : value < 0.67 ? '#8B5CF6' : '#A855F7';
+  const label = value < 0.33 ? 'Stable' : value < 0.67 ? 'Balanced' : 'Flexible';
   return `
     <div class="detail-instability">
       <div class="instability-header">
