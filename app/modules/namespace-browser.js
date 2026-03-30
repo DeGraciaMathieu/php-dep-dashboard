@@ -331,11 +331,15 @@ function renderBreadcrumb() {
   const isClassMode = viewMode === 'classes';
   const toggleLabel = isClassMode ? 'Namespaces' : 'Classes';
   const toggleTitle = isClassMode ? 'Afficher par namespaces' : 'Afficher toutes les classes';
+  const sdpMode = state.sdpMode;
+  const sdpLabel = sdpMode === 'both' ? 'SDP: both' : sdpMode === 'stable' ? 'SDP: stable' : sdpMode === 'unstable' ? 'SDP: unstable' : 'SDP';
 
   el.innerHTML =
     '<span class="breadcrumb-path">' + items.join('') + '</span>' +
     '<button class="view-mode-toggle' + (isClassMode ? ' view-mode-toggle--active' : '') +
-    '" id="view-mode-toggle" title="' + toggleTitle + '">' + toggleLabel + '</button>';
+    '" id="view-mode-toggle" title="' + toggleTitle + '">' + toggleLabel + '</button>' +
+    '<button class="view-mode-toggle' + (sdpMode ? ' view-mode-toggle--active' : '') +
+    '" id="btn-sdp-toggle" title="Filtrer les arêtes par stabilité (SDP)">' + sdpLabel + '</button>';
 
   el.querySelectorAll('.breadcrumb-item[data-scope]').forEach((item) => {
     item.addEventListener('click', () => navigateToScope(item.dataset.scope));
@@ -343,6 +347,10 @@ function renderBreadcrumb() {
 
   el.querySelector('#view-mode-toggle').addEventListener('click', () => {
     setViewMode(viewMode === 'folders' ? 'classes' : 'folders');
+  });
+
+  el.querySelector('#btn-sdp-toggle').addEventListener('click', () => {
+    emit('instability:edges:toggle');
   });
 }
 
@@ -354,4 +362,5 @@ export function initNamespaceBrowser(data) {
   nsData = data;
   currentScope = [];
   renderBreadcrumb();
+  on('breadcrumb:refresh', renderBreadcrumb);
 }

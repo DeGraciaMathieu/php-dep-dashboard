@@ -16,4 +16,5 @@ export const state = {
   selectedNode: null,
   focusDepth: 1,
   filtersActive: false,
+  sdpMode: null, // null | 'both' | 'stable' | 'unstable'
 };

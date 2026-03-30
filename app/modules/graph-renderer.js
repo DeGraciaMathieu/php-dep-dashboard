@@ -139,7 +139,16 @@ export function initGraph(data) {
     cy.endBatch();
     state.selectedNode = null;
     if (state.cycles && state.cycles.length > 0) markCycleNodes(state.cycles);
+    if (state.sdpMode) applyInstabilityEdgeColors();
     runLayout('fcose');
+  });
+
+  on('instability:edges:toggle', () => {
+    const cycle = [null, 'both', 'stable', 'unstable'];
+    state.sdpMode = cycle[(cycle.indexOf(state.sdpMode) + 1) % cycle.length];
+    cy.edges().removeClass('sdp-ok sdp-violation sdp-hidden');
+    if (state.sdpMode) applyInstabilityEdgeColors();
+    emit('breadcrumb:refresh');
   });
 
   const btnExport = document.getElementById('btn-export-png');
@@ -423,6 +432,24 @@ function buildStylesheet() {
         'background-color': '#1E4D8C',
       },
     },
+    {
+      selector: 'edge.sdp-hidden',
+      style: { display: 'none' },
+    },
+    {
+      selector: 'edge.sdp-ok',
+      style: {
+        'line-color': '#22C55E',
+        'target-arrow-color': '#22C55E',
+      },
+    },
+    {
+      selector: 'edge.sdp-violation',
+      style: {
+        'line-color': '#EF4444',
+        'target-arrow-color': '#EF4444',
+      },
+    },
   ];
 }
 
@@ -511,6 +538,24 @@ export function resetFocus() {
   cy.elements().removeClass('dimmed highlighted');
   cy.endBatch();
   state.selectedNode = null;
+}
+
+function applyInstabilityEdgeColors() {
+  if (!cy || !state.sdpMode) return;
+  cy.startBatch();
+  cy.edges().forEach((edge) => {
+    const srcI = cy.getElementById(edge.data('source')).data('instability');
+    const tgtI = cy.getElementById(edge.data('target')).data('instability');
+    if (srcI === null || srcI === undefined || tgtI === null || tgtI === undefined) {
+      if (state.sdpMode !== 'both') edge.addClass('sdp-hidden');
+      return;
+    }
+    const isOk = srcI >= tgtI;
+    edge.addClass(isOk ? 'sdp-ok' : 'sdp-violation');
+    if (state.sdpMode === 'stable' && !isOk) edge.addClass('sdp-hidden');
+    if (state.sdpMode === 'unstable' && isOk) edge.addClass('sdp-hidden');
+  });
+  cy.endBatch();
 }
 
 export function markCycleNodes(cycles) {

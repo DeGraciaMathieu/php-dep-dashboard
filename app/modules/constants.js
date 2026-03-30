@@ -9,6 +9,8 @@ export const EVENTS = {
   FILTERS_APPLIED: 'filters:applied',
   NAMESPACE_REBUILD: 'namespace:rebuild',
   GRAPH_READY: 'graph:ready',
+  INSTABILITY_EDGES_TOGGLE: 'instability:edges:toggle',
+  BREADCRUMB_REFRESH: 'breadcrumb:refresh',
 };
 
 export const DOM = {

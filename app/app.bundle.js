@@ -15,6 +15,8 @@ const EVENTS = {
   FILTERS_APPLIED: 'filters:applied',
   NAMESPACE_REBUILD: 'namespace:rebuild',
   GRAPH_READY: 'graph:ready',
+  INSTABILITY_EDGES_TOGGLE: 'instability:edges:toggle',
+  BREADCRUMB_REFRESH: 'breadcrumb:refresh',
 };
 
 const DOM = {
@@ -67,6 +69,7 @@ const state = {
   selectedNode: null,
   focusDepth: 1,
   filtersActive: false,
+  sdpMode: null, // null | 'both' | 'stable' | 'unstable'
 };
 
 
@@ -623,11 +626,15 @@ function renderBreadcrumb() {
   const isClassMode = viewMode === 'classes';
   const toggleLabel = isClassMode ? 'Namespaces' : 'Classes';
   const toggleTitle = isClassMode ? 'Afficher par namespaces' : 'Afficher toutes les classes';
+  const sdpMode = state.sdpMode;
+  const sdpLabel = sdpMode === 'both' ? 'SDP: both' : sdpMode === 'stable' ? 'SDP: stable' : sdpMode === 'unstable' ? 'SDP: unstable' : 'SDP';
 
   el.innerHTML =
     '<span class="breadcrumb-path">' + items.join('') + '</span>' +
     '<button class="view-mode-toggle' + (isClassMode ? ' view-mode-toggle--active' : '') +
-    '" id="view-mode-toggle" title="' + toggleTitle + '">' + toggleLabel + '</button>';
+    '" id="view-mode-toggle" title="' + toggleTitle + '">' + toggleLabel + '</button>' +
+    '<button class="view-mode-toggle' + (sdpMode ? ' view-mode-toggle--active' : '') +
+    '" id="btn-sdp-toggle" title="Filtrer les arêtes par stabilité (SDP)">' + sdpLabel + '</button>';
 
   el.querySelectorAll('.breadcrumb-item[data-scope]').forEach((item) => {
     item.addEventListener('click', () => navigateToScope(item.dataset.scope));
@@ -635,6 +642,10 @@ function renderBreadcrumb() {
 
   el.querySelector('#view-mode-toggle').addEventListener('click', () => {
     setViewMode(viewMode === 'folders' ? 'classes' : 'folders');
+  });
+
+  el.querySelector('#btn-sdp-toggle').addEventListener('click', () => {
+    emit('instability:edges:toggle');
   });
 }
 
@@ -646,6 +657,7 @@ function initNamespaceBrowser(data) {
   nsData = data;
   currentScope = [];
   renderBreadcrumb();
+  on('breadcrumb:refresh', renderBreadcrumb);
 }
 
 
@@ -789,7 +801,16 @@ function initGraph(data) {
     cy.endBatch();
     state.selectedNode = null;
     if (state.cycles && state.cycles.length > 0) markCycleNodes(state.cycles);
+    if (state.sdpMode) applyInstabilityEdgeColors();
     runLayout('fcose');
+  });
+
+  on('instability:edges:toggle', () => {
+    const cycle = [null, 'both', 'stable', 'unstable'];
+    state.sdpMode = cycle[(cycle.indexOf(state.sdpMode) + 1) % cycle.length];
+    cy.edges().removeClass('sdp-ok sdp-violation sdp-hidden');
+    if (state.sdpMode) applyInstabilityEdgeColors();
+    emit('breadcrumb:refresh');
   });
 
   const btnExport = document.getElementById('btn-export-png');
@@ -1073,6 +1094,24 @@ function buildStylesheet() {
         'background-color': '#1E4D8C',
       },
     },
+    {
+      selector: 'edge.sdp-hidden',
+      style: { display: 'none' },
+    },
+    {
+      selector: 'edge.sdp-ok',
+      style: {
+        'line-color': '#22C55E',
+        'target-arrow-color': '#22C55E',
+      },
+    },
+    {
+      selector: 'edge.sdp-violation',
+      style: {
+        'line-color': '#EF4444',
+        'target-arrow-color': '#EF4444',
+      },
+    },
   ];
 }
 
@@ -1161,6 +1200,24 @@ function resetFocus() {
   cy.elements().removeClass('dimmed highlighted');
   cy.endBatch();
   state.selectedNode = null;
+}
+
+function applyInstabilityEdgeColors() {
+  if (!cy || !state.sdpMode) return;
+  cy.startBatch();
+  cy.edges().forEach((edge) => {
+    const srcI = cy.getElementById(edge.data('source')).data('instability');
+    const tgtI = cy.getElementById(edge.data('target')).data('instability');
+    if (srcI === null || srcI === undefined || tgtI === null || tgtI === undefined) {
+      if (state.sdpMode !== 'both') edge.addClass('sdp-hidden');
+      return;
+    }
+    const isOk = srcI >= tgtI;
+    edge.addClass(isOk ? 'sdp-ok' : 'sdp-violation');
+    if (state.sdpMode === 'stable' && !isOk) edge.addClass('sdp-hidden');
+    if (state.sdpMode === 'unstable' && isOk) edge.addClass('sdp-hidden');
+  });
+  cy.endBatch();
 }
 
 function markCycleNodes(cycles) {
