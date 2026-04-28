@@ -58,19 +58,50 @@ $openBrowser = in_array('--open', $argv);
 $extraArgs = array_filter(array_slice($argv, 2), fn($a) => $a !== '--open');
 $extra = implode(' ', array_map('escapeshellarg', $extraArgs));
 
-$cmd = escapeshellarg($phpDep) . ' analyze ' . escapeshellarg($path) . ' --format=json ' . $extra . ' 2>&1';
+$cmd = escapeshellarg($phpDep) . ' analyze ' . escapeshellarg($path) . ' --format=json ' . $extra;
 
 echo "{$bold}Analysing{$reset} {$cyan}{$path}{$reset}...\n";
 
-$output = shell_exec($cmd);
+$process = proc_open($cmd, [
+    1 => ['pipe', 'w'],
+    2 => ['pipe', 'w'],
+], $pipes);
 
-if (! $output) {
-    error("php-dep returned invalid output.");
+if (! is_resource($process)) {
+    error("Unable to start php-dep.");
+}
+
+$output = stream_get_contents($pipes[1]);
+$diagnostics = stream_get_contents($pipes[2]);
+
+fclose($pipes[1]);
+fclose($pipes[2]);
+
+$exitCode = proc_close($process);
+
+if ($exitCode !== 0) {
+    $details = trim($diagnostics) ?: trim($output);
+    error("php-dep failed with exit code {$exitCode}." . ($details !== '' ? "\n{$details}" : ''));
+}
+
+$jsonStart = strpos($output, '{');
+$jsonEnd = strrpos($output, '}');
+
+if ($jsonStart === false || $jsonEnd === false || $jsonEnd < $jsonStart) {
+    $details = trim($diagnostics) ?: trim($output);
+    error("php-dep returned invalid JSON output." . ($details !== '' ? "\n{$details}" : ''));
+}
+
+$json = substr($output, $jsonStart, $jsonEnd - $jsonStart + 1);
+$decoded = json_decode($json, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    error('php-dep returned invalid JSON: ' . json_last_error_msg());
 }
 
 $folderName = basename(realpath($path));
 $dataFile = $dashboardDir . '/' . $folderName . '.json';
-file_put_contents($dataFile, $output);
+file_put_contents($dataFile, json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
 
 echo "{$green}✓{$reset} {$folderName}.json generated\n";
 
